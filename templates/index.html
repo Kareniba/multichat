@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flask Chatbot Simulación</title>
+    <!-- Vinculación directa al archivo styles.css en la raíz de static -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+
+<div class="chat-container">
+    <div class="chat-header">FlaskBot</div>
+    <div class="chat-messages" id="chatMessages">
+        <div class="message bot-message">¡Hola! Soy un chat simulado en Flask. Escríbeme algo para empezar.</div>
+    </div>
+    <div class="chat-input-area">
+        <input type="text" id="userInput" placeholder="Escribe un mensaje aquí..." onkeypress="handleKeyPress(event)">
+        <button onclick="sendMessage()">Enviar</button>
+    </div>
+</div>
+
+<script>
+    const chatMessages = document.getElementById('chatMessages');
+    const userInput = document.getElementById('userInput');
+
+    // Función auxiliar para agregar burbujas al chat
+    function appendMessage(text, sender) {
+        const messageDiv = document.createElement('div');
+        messageDiv.classList.add('message', sender === 'user' ? 'user-message' : 'bot-message');
+        messageDiv.innerText = text;
+        chatMessages.appendChild(messageDiv);
+        chatMessages.scrollTop = chatMessages.scrollHeight; // Auto-scroll inmediato al final
+    }
+
+    // Permite enviar el mensaje al presionar la tecla Enter
+    function handleKeyPress(event) {
+        if (event.key === 'Enter') {
+            sendMessage();
+        }
+    }
+
+    // Envía el mensaje al backend mediante fetch
+    async function sendMessage() {
+        const text = userInput.value.trim();
+        if (!text) return;
+
+        // Renderizar el mensaje escrito por el usuario
+        appendMessage(text, 'user');
+        userInput.value = '';
+
+        try {
+            // Petición POST asíncrona hacia el backend en Flask
+            const response = await fetch('/get_response', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ message: text })
+            });
+            
+            const data = await response.json();
+            
+            // Renderizar la respuesta devuelta por el bot
+            appendMessage(data.response, 'bot');
+        } catch (error) {
+            console.error('Error:', error);
+            appendMessage('Error al conectar con el servidor.', 'bot');
+        }
+    }
+</script>
+
+</body>
+</html>
